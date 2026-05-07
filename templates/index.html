@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Network Fingerprint &amp; Website Behavior Profiler</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="dark">
+
+<header class="app-header">
+  <div class="brand">
+    <div class="logo">🛡️</div>
+    <div>
+      <h1>NETWORK FINGERPRINT &amp; WEBSITE BEHAVIOR PROFILER</h1>
+      <p class="subtitle">Capture • Analyze • Compare Website Network Behavior</p>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button id="aboutBtn" class="ghost-btn">ⓘ About</button>
+    <button id="themeToggle" class="icon-btn" title="Toggle theme">🌙</button>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- Stepper -->
+  <ol class="stepper" id="stepper">
+    <li class="step active" data-step="1"><span class="num">1</span> ENTER URLS</li>
+    <li class="step" data-step="2"><span class="num">2</span> CAPTURE TRAFFIC</li>
+    <li class="step" data-step="3"><span class="num">3</span> ANALYZE</li>
+    <li class="step" data-step="4"><span class="num">4</span> RESULTS</li>
+  </ol>
+
+  <!-- Section 1: URL Input -->
+  <section class="panel">
+    <h2>1. Enter Website URL(s)
+      <span class="hint">Enter one URL to analyze or two to compare behavior.</span>
+    </h2>
+    <div class="grid-4">
+      <div class="field">
+        <label>Primary URL</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔗</span>
+          <input id="primaryUrl" type="text" placeholder="https://www.example.com" value="https://www.netflix.com">
+        </div>
+        <small class="validation" id="primaryValidation"></small>
+      </div>
+      <div class="field">
+        <label>Compare with (optional)</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔗</span>
+          <input id="compareUrl" type="text" placeholder="https://www.example2.com" value="https://www.bbc.com">
+        </div>
+        <small class="validation" id="compareValidation"></small>
+      </div>
+      <div class="field">
+        <label>Capture Duration</label>
+        <select id="captureDuration">
+          <option value="10">10 seconds (default)</option>
+          <option value="20">20 seconds</option>
+          <option value="30">30 seconds</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Analysis Mode</label>
+        <div class="toggle-group" id="analysisMode">
+          <button data-mode="single">Single</button>
+          <button data-mode="compare" class="active">Compare</button>
+        </div>
+      </div>
+    </div>
+    <div class="cta-row">
+      <button id="startBtn" class="primary-btn">▶ START ANALYSIS</button>
+    </div>
+  </section>
+
+  <!-- Pipeline -->
+  <section class="panel">
+    <h3>What happens next?</h3>
+    <div class="pipeline">
+      <div class="pipe-step"><span>🌐</span><b>DNS Resolve</b><small>Resolve domain to IP addresses</small></div>
+      <div class="arrow">→</div>
+      <div class="pipe-step"><span>📦</span><b>Packet Capture</b><small>Capture live traffic with Scapy</small></div>
+      <div class="arrow">→</div>
+      <div class="pipe-step"><span>📊</span><b>Feature Extract</b><small>Compute metrics &amp; statistics</small></div>
+      <div class="arrow">→</div>
+      <div class="pipe-step"><span>🆔</span><b>Fingerprint Build</b><small>Assemble structured fingerprint</small></div>
+      <div class="arrow">→</div>
+      <div class="pipe-step"><span>🏷️</span><b>Classify Behavior</b><small>Apply rules &amp; label behavior</small></div>
+      <div class="arrow">→</div>
+      <div class="pipe-step"><span>📈</span><b>Visualize Results</b><small>Display charts &amp; comparison</small></div>
+    </div>
+  </section>
+
+  <!-- Status -->
+  <section class="panel status-panel">
+    <div>
+      <h3 id="statusTitle">Ready to analyze</h3>
+      <small id="statusMsg">Click "Start Analysis" to begin capturing live traffic.</small>
+    </div>
+    <div class="status-meta">
+      <div>Est. total time: <b>~15–20s</b></div>
+      <small>Capture: 10s • Process: ~3s</small>
+    </div>
+  </section>
+
+  <!-- Section 2: Summary -->
+  <section class="panel">
+    <h2>2. Network Fingerprint Summary</h2>
+    <div class="summary-grid">
+      <div id="cardA" class="fp-card empty">
+        <div class="fp-empty">Run an analysis to see Site A fingerprint.</div>
+      </div>
+      <div id="cardB" class="fp-card empty">
+        <div class="fp-empty">Run a comparison to see Site B fingerprint.</div>
+      </div>
+      <div id="diffCard" class="fp-card diff-card empty">
+        <div class="fp-empty">Differences will appear in compare mode.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: Charts -->
+  <section class="panel">
+    <h2>3. Traffic Visualizations</h2>
+    <div class="charts-grid">
+      <div class="chart-card protocol-chart">
+        <h4>Protocol Distribution</h4>
+        <canvas id="protocolChart"></canvas>
+        <small id="protocolNote" class="muted">Awaiting data…</small>
+      </div>
+      <div class="chart-card">
+        <h4>Packet Size Histogram <span class="muted">(bytes)</span></h4>
+        <canvas id="histogramChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <h4>Traffic Timeline <span class="muted">(Bytes/sec)</span></h4>
+        <canvas id="timelineChart"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 4: Comparison Report -->
+  <section class="panel" id="comparisonSection">
+    <h2>4. Comparison Report</h2>
+    <div class="compare-wrap">
+      <table id="compareTable" class="compare-table">
+        <thead>
+          <tr><th>Metric</th><th>Site A</th><th>Site B</th><th>Difference</th><th>Who Has More</th></tr>
+        </thead>
+        <tbody><tr><td colspan="5" class="muted">Run compare mode to populate this report.</td></tr></tbody>
+      </table>
+      <div class="chart-card">
+        <h4>Overlay Traffic <span class="muted">(Bytes/sec)</span></h4>
+        <canvas id="overlayChart"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 5: JSON output -->
+  <section class="panel">
+    <h2>5. Raw Fingerprint JSON Output <span class="muted">(Truncated)</span>
+      <a id="downloadJsonBtn" href="/api/download?site=A" class="link-btn">⬇ Download Full JSON</a>
+    </h2>
+    <div class="json-grid">
+      <pre id="jsonA" class="codeblock">{ "site_url": "—" }</pre>
+      <pre id="jsonB" class="codeblock">{ "site_url": "—" }</pre>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="panel footer">
+    <div>
+      <h4>About This Tool</h4>
+      <p>Educational tool that captures live network traffic using Scapy,
+         analyzes packet behavior, and generates a fingerprint to help students
+         compare how websites communicate.</p>
+      <div class="tags">
+        <span>🐍 Python</span><span>📡 Scapy</span><span>🧪 Flask</span>
+        <span>📊 Chart.js</span><span>⚡ JavaScript</span><span>🎨 HTML/CSS</span>
+      </div>
+    </div>
+    <div>
+      <h4>Network Analysis Workflow</h4>
+      <ol class="workflow">
+        <li>User enters URL(s) and clicks Analyze</li>
+        <li>Flask backend resolves domain to IPs</li>
+        <li>Scapy captures packets for N seconds</li>
+        <li>extract.py computes all metrics</li>
+        <li>fingerprint.py builds structured JSON</li>
+        <li>classify.py assigns behavior label</li>
+        <li>JSON returned to frontend</li>
+        <li>Charts &amp; summary rendered in browser</li>
+      </ol>
+    </div>
+  </footer>
+  <p class="copyright">© 2025 Network Fingerprint Profiler · Educational Use Only · v1.0.0</p>
+</main>
+
+<!-- About modal -->
+<div id="aboutModal" class="modal hidden">
+  <div class="modal-body">
+    <h3>About</h3>
+    <p>This educational tool captures live network traffic with <b>Scapy</b>,
+       extracts features, builds a structured network fingerprint, and classifies
+       website behavior into categories like <i>Streaming, Social Media, Static
+       Content,</i> or <i>API-Heavy</i>.</p>
+    <p>Tech stack: Python • Scapy • Flask • HTML/CSS • JavaScript • Chart.js • pcap/JSON.</p>
+    <button class="primary-btn" id="closeAbout">Close</button>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
