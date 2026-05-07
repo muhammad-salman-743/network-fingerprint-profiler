@@ -40,15 +40,6 @@ python app.py
 ```
 Open http://localhost:5000 in your browser.
 
-## Live capture (optional, requires admin/root)
-By default the app runs in **demo mode** with deterministic synthetic packet
-traces so it works in any environment (including classrooms without raw socket
-permission). To enable real Scapy live capture:
-
-```bash
-USE_LIVE_CAPTURE=1 sudo python app.py        # Linux/macOS
-# Windows: install Npcap, then run as Administrator with USE_LIVE_CAPTURE=1
-```
 
 ## API Endpoints
 | Method | Endpoint        | Body                                            | Returns |
